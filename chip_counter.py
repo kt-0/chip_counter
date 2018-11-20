@@ -1,43 +1,51 @@
+#!/usr/local/bin/python3.7
 import pandas as pd
+
+# NOTE(s): #1 - for this to work as an executable, all file paths need to be absolute
+
 
 def main():
 
+
+	#1
 	df = pd.read_excel('assets/excel/chip_counter.xlsx', header=0)
 	df_filled = df.fillna(method='bfill', axis=0)
 	df.index = pd.MultiIndex.from_arrays([df_filled['Date'], df_filled['Time']])
 	df.drop(columns=['Date', 'Time'], inplace=True)
 
-	chip_choices = {
-		"1": "Doritos (Nacho Cheese)",
-		"2": "Lays (Pickle)",
-		"3": "Cheetos (Flamin' Hot)",
-		"4": "Doritos (Cool Ranch)",
-		"5": "Takis Pop (Fuego)",
-		"6": "Ruffles (Cheddar & Sour Cream)",
-		"7": "Wavy Lays (Hickory BBQ)"
+	snack_choices = {
+		"1": {"name": "Doritos (Nacho Cheese)", "category": "chips"},
+		"2": {"name": "Lays (Pickle)", "category": "chips"},
+		"3": {"name": "Cheetos (Flamin' Hot)", "category": "chips"},
+		"4": {"name": "Doritos (Cool Ranch)", "category": "chips"},
+		"5": {"name": "Takis Pop (Fuego)", "category": "chips"},
+		"6": {"name": "Ruffles (Cheddar & Sour Cream)", "category": "chips"},
+		"7": {"name": "Wavy Lays (Hickory BBQ)", "category": "chips"},
+		"8": {"name": "Pocky (Chocolate)", "category": "cookies"}
 		}
 
 
-	chip_vendor = []
-	for x in chip_choices.items():
-		name = x[1]
+	snack_vendor = []
+	for x in snack_choices.items():
+		name = x[1]['name']
 		vend_num = x[0]
-		chip_vendor.append(" [{0}]{2:^3}{1:<25}".format(vend_num, name, "-"))
-		if int(x[0])%2==0: #2 choices per line
-			chip_vendor[-1] = chip_vendor[-1]+"\n"
+		snack_vendor.append(" [{0}]{2:^3}{1:<25}".format(vend_num, name, "-"))
+		if int(vend_num)%2==0: # two choices per line
+			snack_vendor[-1] = snack_vendor[-1]+"\n"
 
-	print("".join(chip_vendor))
+	print("".join(snack_vendor))
 	selection = input("Make selection: ")
-	while ((not selection.isdigit()) or (selection not in chip_choices.keys())):
+	while ((not selection.isdigit()) or (selection not in snack_choices.keys())):
 		print("*************************")
 		print("********* WRONG *********")
 		print("*************************\n")
-		print("".join(chip_vendor))
-		selection = input("Selection should be a number between 1 and {} ".format(list(chip_choices.keys())[-1]))
+		print("".join(snack_vendor))
+		selection = input("Selection should be a number between 1 and {} ".format(list(snack_choices.keys())[-1]))
 
-	choice = chip_choices[selection]
+	choice = snack_choices[selection]['name']
+	print(choice)
 	now = pd.MultiIndex.from_arrays([[pd.datetime.today().date()], [pd.datetime.today().time()]], names=['Date','Time'])
-	dfnew = pd.DataFrame({'Chips': choice}, index=now)
+	dfnew = pd.DataFrame({'Snack': choice}, index=now)
 	df = df.append(dfnew, sort=False)
 
 
@@ -46,6 +54,7 @@ def main():
 
 
 def write_xlsx(df):
+	#1
 	writer = pd.ExcelWriter("assets/excel/chip_counter.xlsx", engine="xlsxwriter", date_format='mmm-dd')
 	df.to_excel(writer, sheet_name="Sheet1")
 	workbook = writer.book
@@ -72,17 +81,16 @@ def write_xlsx(df):
 	date_format = workbook.add_format(date)
 	time_format = workbook.add_format(time)
 
-	print(df.index.names)
+	#print(df.index.names)
 
 # format the head
-	# index formatting
+	# index columns
 	for i,x in enumerate(df.index.names):
 		worksheet.write(0, i, x, head_format)
 
-	# non-index column head
+	# non-index column
 	for col_num, value in enumerate(df.columns.values):
-		# worksheet.write(row, col, value, format)
-		print(df.columns)
+		# print(df.columns)
 		worksheet.write(0, 2, value, head_format)
 
 
