@@ -5,15 +5,16 @@ def main():
 	df = pd.read_excel('assets/excel/chip_counter.xlsx', header=0)
 	df_filled = df.fillna(method='bfill', axis=0)
 	df.index = pd.MultiIndex.from_arrays([df_filled['Date'], df_filled['Time']])
-	df.drop(columns=['Date','Time'],inplace=True)
+	df.drop(columns=['Date', 'Time'], inplace=True)
 
 	chip_choices = {
-		1:"Doritos (Nacho Cheese)",
-		2:"Lays (Pickle)",
-		3:"Cheetos (Flamin' Hot)",
-		4:"Doritos (Cool Ranch)",
-		5:"Takis Pop (Fuego)",
-		6:"Ruffles (Cheddar & Sour Cream)"
+		"1": "Doritos (Nacho Cheese)",
+		"2": "Lays (Pickle)",
+		"3": "Cheetos (Flamin' Hot)",
+		"4": "Doritos (Cool Ranch)",
+		"5": "Takis Pop (Fuego)",
+		"6": "Ruffles (Cheddar & Sour Cream)",
+		"7": "Wavy Lays (Hickory BBQ)"
 		}
 
 
@@ -21,21 +22,20 @@ def main():
 	for x in chip_choices.items():
 		name = x[1]
 		vend_num = x[0]
-		chip_vendor.append(" [{0:d}]{2:^3}{1:<25}".format(vend_num, name, "-"))
-		if x[0]%3==0: #3 choices per line
+		chip_vendor.append(" [{0}]{2:^3}{1:<25}".format(vend_num, name, "-"))
+		if int(x[0])%2==0: #2 choices per line
 			chip_vendor[-1] = chip_vendor[-1]+"\n"
 
 	print("".join(chip_vendor))
 	selection = input("Make selection: ")
-	while ((selection.isdigit() != True) and (selection not in chip_vendor.keys())):
-		print("".join(chip_vendor))
+	while ((not selection.isdigit()) or (selection not in chip_choices.keys())):
 		print("*************************")
 		print("********* WRONG *********")
-		print("*************************")
+		print("*************************\n")
 		print("".join(chip_vendor))
-		selection = input("Selection should be a number between 1 and {} ".format(list(chips_choices.keys())[-1]))
+		selection = input("Selection should be a number between 1 and {} ".format(list(chip_choices.keys())[-1]))
 
-	choice = chip_choices[int(selection)]
+	choice = chip_choices[selection]
 	now = pd.MultiIndex.from_arrays([[pd.datetime.today().date()], [pd.datetime.today().time()]], names=['Date','Time'])
 	dfnew = pd.DataFrame({'Chips': choice}, index=now)
 	df = df.append(dfnew, sort=False)
@@ -72,19 +72,26 @@ def write_xlsx(df):
 	date_format = workbook.add_format(date)
 	time_format = workbook.add_format(time)
 
+	print(df.index.names)
 
-	# format the head
+# format the head
+	# index formatting
+	for i,x in enumerate(df.index.names):
+		worksheet.write(0, i, x, head_format)
+
+	# non-index column head
 	for col_num, value in enumerate(df.columns.values):
 		# worksheet.write(row, col, value, format)
-		#print("col_num: ", col_num, " value: ", value)
-		worksheet.write(0, col_num + 1, value, head_format)
+		print(df.columns)
+		worksheet.write(0, 2, value, head_format)
 
+
+	# writing time and date with desired format
 	for i in range(1, df.shape[0]+1):
 
 		x = i-1
 		d = df.index[x][0].date()
 		t = df.index[x][1]
-		#c = df.iloc[x][0]
 
 		worksheet.write_datetime(i, 0, d, date_format)
 		worksheet.write_datetime(i, 1, t, time_format)
